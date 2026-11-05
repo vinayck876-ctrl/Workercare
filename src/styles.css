@@ -109,3 +109,25 @@
 .wc-login-error{padding:11px 14px;border-radius:10px;background:#8c233c;color:#fff;font-size:13px}.wc-card-foot{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:27px;color:#9dbbda;font-size:11px}.wc-status-dot{width:7px;height:7px;border-radius:50%;background:#42dfa8;box-shadow:0 0 10px #42dfa8}
 @media(max-width:900px){.wc-login-page{grid-template-columns:1fr}.wc-visual-panel{min-height:320px;height:34vh;padding:25px 28px}.wc-brand{font-size:21px}.wc-worker-art{top:55%;left:70%;transform:translate(-50%,-50%) scale(.56);transform-origin:center}.wc-visual-caption{left:28px;bottom:34px;font-size:22px}.wc-visual-footer{display:none}.wc-form-panel{min-height:66vh;padding:65px 22px 40px}.wc-form-card{max-width:470px}}
 @media(max-width:520px){.wc-visual-panel{height:245px;min-height:245px;padding:22px}.wc-brand{font-size:20px}.wc-worker-art{left:76%;top:58%;transform:translate(-50%,-50%) scale(.42)}.wc-visual-caption{font-size:17px;bottom:25px}.wc-form-panel{padding:58px 17px 30px}.wc-form-card{padding:48px 23px 28px;border-radius:24px}.wc-card-hardhat{right:18px;width:65px;height:65px;top:-30px}.wc-card-brand{font-size:34px}.wc-card-subtitle{font-size:14px;margin-bottom:26px}.wc-field{height:56px;border-radius:13px}.wc-field input{font-size:15px}.wc-login-button{height:56px;font-size:17px}}
+
+/* Simple, clean WorkerCare login */
+.wc-clean-page{min-height:100vh;width:100%;display:grid;place-items:center;padding:28px;background:linear-gradient(135deg,#071d43 0%,#0b397b 52%,#062451 100%);font-family:'DM Sans',sans-serif;color:#f7fbff;position:relative;overflow:hidden}
+.wc-clean-page:before,.wc-clean-page:after{content:'';position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(1px);pointer-events:none}
+.wc-clean-page:before{top:-370px;left:-190px;background:#1388ed30}.wc-clean-page:after{bottom:-400px;right:-180px;background:#19b9ff22}
+.wc-clean-card{position:relative;z-index:1;width:min(100%,420px);padding:42px 38px 28px;border:1px solid #ffffff28;border-radius:22px;background:#ffffff0d;box-shadow:0 24px 70px #00132f66;backdrop-filter:blur(14px);text-align:center}
+.wc-clean-logo{width:52px;height:52px;margin:0 auto 15px;display:grid;place-items:center;border-radius:15px;background:#168de9;color:#fff;box-shadow:0 8px 22px #0876df55}
+.wc-clean-card h1{margin:0;font:800 34px/1.15 Manrope,sans-serif;letter-spacing:-1.4px;color:#fff}.wc-clean-card h1 span{color:#38bdf8}
+.wc-clean-subtitle{margin:10px 0 30px;color:#b9cde5;font-size:14px}
+.wc-clean-form{display:grid;gap:16px;text-align:left}
+.wc-clean-field{height:54px;display:flex;align-items:center;gap:12px;padding:0 15px;border:1px solid #9fc8ef55;border-radius:11px;background:#ffffff0c;color:#b9d9f6;transition:.2s}
+.wc-clean-field:focus-within{border-color:#38bdf8;box-shadow:0 0 0 3px #38bdf822}
+.wc-clean-field input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:400 15px 'DM Sans',sans-serif}
+.wc-clean-field input::placeholder{color:#b5c8df}
+.wc-clean-field button{display:grid;place-items:center;border:0;background:transparent;color:#c7def5;padding:4px}
+.wc-clean-options{display:flex;align-items:center;justify-content:space-between;padding:0 2px;color:#d8e7f7;font-size:13px}
+.wc-clean-options label{display:flex;align-items:center;gap:9px;cursor:pointer}.wc-clean-options input{width:16px;height:16px;accent-color:#168de9}
+.wc-clean-submit{height:54px;margin-top:4px;border:0;border-radius:11px;background:linear-gradient(100deg,#22b8f5,#0878e8);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 9px 22px #0878e844;transition:.18s}
+.wc-clean-submit:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.wc-clean-error{padding:10px 12px;border-radius:8px;background:#a32e45;color:#fff;font-size:13px}
+.wc-clean-footer{margin-top:25px;padding-top:18px;border-top:1px solid #ffffff1c;color:#91accb;font-size:11px;letter-spacing:.4px}
+@media(max-width:480px){.wc-clean-page{padding:18px}.wc-clean-card{padding:35px 23px 24px;border-radius:18px}.wc-clean-card h1{font-size:31px}}
