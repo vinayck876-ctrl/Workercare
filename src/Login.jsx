@@ -22,7 +22,7 @@ export default function Login({ onLogin }) {
     onLogin({ name: account.name, role: account.role, username: account.username, remember });
   }
   return <main className="wc-clean-page">
-    <section className="wc-clean-card">
+    <section className="wc-clean-card" aria-label="WorkerCare sign in">
       <div className="wc-clean-logo"><Activity size={25} strokeWidth={2.2}/></div>
       <h1>Worker<span>Care</span></h1>
       <p className="wc-clean-subtitle">Sign in to continue</p>
