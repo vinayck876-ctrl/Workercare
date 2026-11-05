@@ -1,8 +1,7 @@
 export const initialWorkers = [
-  { id: 'WK-1042', name: 'Arun Kumar', role: 'Construction', site: 'North Site', status: 'Safe', battery: 92, lastSeen: 'Just now', initials: 'AK', color: 'blue' },
-  { id: 'WK-1038', name: 'Meena Devi', role: 'Street vendor', site: 'Market Road', status: 'Safe', battery: 78, lastSeen: '1 min ago', initials: 'MD', color: 'violet' },
-  { id: 'WK-1021', name: 'Ravi Shankar', role: 'Daily wage', site: 'East Site', status: 'Warning', battery: 46, lastSeen: '2 min ago', initials: 'RS', color: 'orange' },
-  { id: 'WK-1016', name: 'Suresh Babu', role: 'Construction', site: 'North Site', status: 'Safe', battery: 84, lastSeen: '3 min ago', initials: 'SB', color: 'green' },
+  { id: 'WK-1042', name: 'Arun Kumar', role: 'Construction Worker', site: 'North Site', status: 'Safe', battery: 92, lastSeen: 'Just now', initials: 'AK', color: 'blue' },
+  { id: 'WK-1038', name: 'Meena Devi', role: 'Street Vendor', site: 'Market Road', status: 'Safe', battery: 78, lastSeen: '1 min ago', initials: 'MD', color: 'violet' },
+  { id: 'WK-1016', name: 'Suresh Babu', role: 'Construction Worker', site: 'North Site', status: 'Warning', battery: 46, lastSeen: '2 min ago', initials: 'SB', color: 'green' },
 ];
 
 export const temperatureData = [
@@ -16,7 +15,7 @@ export const temperatureData = [
 ];
 
 export const initialAlerts = [
-  { id: 1, type: 'warning', title: 'Elevated heat conditions', detail: 'Ravi Shankar · East Site', time: '10:42 AM', state: 'Open' },
-  { id: 2, type: 'info', title: 'Device battery running low', detail: 'Worker device WK-1009 · Market Road', time: '10:18 AM', state: 'Acknowledged' },
-  { id: 3, type: 'success', title: 'Scheduled hydration reminder', detail: 'North Site · 3 workers', time: '09:45 AM', state: 'Completed' },
+  { id: 1, workerId: 'WK-1016', type: 'warning', title: 'Elevated heat conditions', detail: 'Suresh Babu · North Site', time: '10:42 AM', state: 'Open' },
+  { id: 2, workerId: 'WK-1038', type: 'info', title: 'Device battery running low', detail: 'Meena Devi · Market Road', time: '10:18 AM', state: 'Acknowledged' },
+  { id: 3, workerId: 'WK-1042', type: 'success', title: 'Hydration reminder completed', detail: 'Arun Kumar · North Site', time: '09:45 AM', state: 'Completed' },
 ];
