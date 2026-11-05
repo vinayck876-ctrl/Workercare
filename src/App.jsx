@@ -41,8 +41,11 @@ function App() {
   const [toast, setToast] = useState('');
   const [range, setRange] = useState('Today');
   const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('workercare-user') || 'null'); }
-    catch { return null; }
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('workercare-user') || 'null');
+      const validUsers = ['supervisor', 'family1', 'family2', 'vendor', 'worker1', 'worker2'];
+      return saved && validUsers.includes(saved.username) ? saved : null;
+    } catch { return null; }
   });
 
   const visibleWorkerIds = currentUser?.role === 'Supervisor'
@@ -168,7 +171,7 @@ function App() {
 
         {active === 'Alerts & incidents' && <section className="panel full-panel"><div className="panel-heading"><div><h2>Alerts & incidents</h2><p>Review safety events and acknowledge follow-up</p></div><StatusPill status={`${openAlerts} Open`}/></div><div className="incident-list">{visibleAlerts.map(a=><div className="incident-row" key={a.id}><div className={`alert-symbol ${a.type}`}>{a.type === 'success' ? <CheckCircle2/> : a.type === 'danger' ? <LifeBuoy/> : <AlertTriangle/>}</div><div className="incident-main"><strong>{a.title}</strong><p>{a.detail}</p><small>{a.time}</small></div><div className="incident-action"><StatusPill status={a.state}/>{a.state === 'Open' && <button className="button button-secondary small-button" onClick={()=>acknowledge(a.id)}><Check size={14}/> Acknowledge</button>}</div></div>)}</div><p className="demo-disclaimer">Demo alerts are local to this browser session. They are not sent to workers, contacts or emergency services.</p></section>}
 
-        {active === 'Device management' && <section className="panel full-panel"><div className="panel-heading"><div><h2>Device management</h2><p>Connectivity and battery overview</p></div><span className="demo-badge"><i/> SAMPLE INVENTORY</span></div><div className="device-grid">{workers.map(w=><div className="device-card" key={w.id}><div className="device-top"><span className="device-icon"><Radio size={19}/></span><StatusPill status="Online"/></div><strong>{w.id}</strong><span>{w.name}</span><div className="device-battery"><div><BatteryMedium size={15}/> Battery level</div><b>{w.battery}%</b></div><div className="battery-track"><i style={{width:w.battery+'%'}}/></div><small>Last seen {w.lastSeen}</small></div>)}</div></section>}
+        {active === 'Device management' && <section className="panel full-panel"><div className="panel-heading"><div><h2>Device management</h2><p>Connectivity and battery overview</p></div><span className="demo-badge"><i/> SAMPLE INVENTORY</span></div><div className="device-grid">{visibleWorkers.map(w=><div className="device-card" key={w.id}><div className="device-top"><span className="device-icon"><Radio size={19}/></span><StatusPill status="Online"/></div><strong>{w.id}</strong><span>{w.name}</span><div className="device-battery"><div><BatteryMedium size={15}/> Battery level</div><b>{w.battery}%</b></div><div className="battery-track"><i style={{width:w.battery+'%'}}/></div><small>Last seen {w.lastSeen}</small></div>)}</div></section>}
 
         <footer className="footer"><span>© 2026 WorkerCare · Prototype dashboard</span><span><i/> Demo data · Not connected to wearable hardware</span></footer>
       </div>
