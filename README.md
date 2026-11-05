@@ -59,3 +59,17 @@ npm run dev
 For deployment, connect this repository to Vercel with the Vite framework preset, build command `npm run build`, and output directory `dist`.
 
 **Demo mode:** dashboard readings, worker profiles, device status, and alerts are illustrative local data. The SOS test does not contact anyone. Live ESP32/backend integration has not yet been implemented. See [software documentation](docs/SOFTWARE.md).
+
+## Prototype login accounts
+
+The dashboard has five built-in demo accounts. Select an account on the login screen to autofill its credentials.
+
+| Role | Username | Password |
+|---|---|---|
+| Administrator | `admin` | `admin123` |
+| North Site Supervisor | `supervisor1` | `site123` |
+| Market Site Supervisor | `supervisor2` | `site123` |
+| Safety Officer | `safety` | `safety123` |
+| Demo Viewer | `demo` | `demo123` |
+
+This is **demo-only client-side access control**. The credentials are included in the public frontend source and are not secure authentication. Do not use real passwords or sensitive data. Login state lasts for the current browser tab/session. No database is required.
