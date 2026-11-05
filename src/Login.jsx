@@ -57,15 +57,6 @@ export default function Login({ onLogin }) {
           {error && <div className="login-error" role="alert">{error}</div>}
           <button className="login-submit" type="submit">Sign in <ArrowRight size={17}/></button>
         </form>
-        <div className="demo-credentials">
-          <div className="demo-credentials-heading"><span>DEMO ACCESS</span><span>5 ACCOUNTS</span></div>
-          <div className="demo-account-list">
-            {DEMO_ACCOUNTS.map(account => <button type="button" key={account.username} onClick={() => {setUsername(account.username);setPassword(account.password);setError('');}}>
-              <span><b>{account.name}</b><small>{account.role}</small></span><code>{account.username}</code>
-            </button>)}
-          </div>
-          <p>Select an account above to autofill its credentials. Passwords are shown in the project README for this prototype.</p>
-        </div>
         <div className="login-legal">Prototype access only · No real worker or medical data is stored.</div>
       </div>
     </section>
