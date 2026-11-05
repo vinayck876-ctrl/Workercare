@@ -3,17 +3,35 @@
 ## Current implementation
 
 The web dashboard is a React + Vite single-page application. It includes:
-- Overview cards for monitored workers, safe workers, open alerts, and device inventory.
-- Environmental overview chart and sample site readings.
-- Worker directory with search.
+- Professional responsive sign-in screen with five built-in demo accounts.
+- Session-only login and sign-out (no database).
+- Overview cards, environmental chart, site readings and worker directory.
 - Live monitoring page with sample environmental values.
-- Alerts page with local acknowledge actions and a simulated SOS test.
+- Alerts page with local acknowledge actions and simulated SOS test.
 - Device inventory with sample battery values.
 - Responsive desktop and mobile navigation.
 
-## Important: demo mode
+## Demo login accounts
 
-All dashboard worker, device, sensor, and alert values are local illustrative data. They are not coming from the ESP32 and do not represent real workers. The SOS test only adds a browser-side demo alert. It does not send messages or contact emergency services.
+| Role | Username | Password |
+|---|---|---|
+| Administrator | `admin` | `admin123` |
+| North Site Supervisor | `supervisor1` | `site123` |
+| Market Site Supervisor | `supervisor2` | `site123` |
+| Safety Officer | `safety` | `safety123` |
+| Demo Viewer | `demo` | `demo123` |
+
+Click an account on the login screen to autofill its username and password.
+
+## No database
+
+The five accounts are hardcoded in `src/Login.jsx`. A successful login is kept in browser `sessionStorage` and cleared on sign-out or when the browser session ends. No database or backend is used.
+
+**Security limitation:** this is not real authentication. The credentials are visible in the frontend bundle and can be bypassed by a technically capable user. Use only for a classroom/demo prototype; do not store personal, worker, health, or other sensitive information.
+
+## Demo data limitations
+
+Worker profiles, device status, battery values, sensor readings, and alerts are illustrative local data. They are not received from the ESP32. The SOS test only adds a browser-side demo alert and does not contact anyone or emergency services.
 
 ## Run locally
 
@@ -24,26 +42,13 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite.
-
 ## Vercel deployment
 
-Import `vinayck876-ctrl/Workercare` into Vercel, or ensure the existing Vercel project is linked to this repository.
+Connect the GitHub repository `vinayck876-ctrl/Workercare` to a Vercel project.
 
 - Framework preset: Vite
 - Build command: `npm run build`
 - Output directory: `dist`
 - Install command: `npm install`
 
-The included `vercel.json` rewrites application routes to the Vite entry point.
-
-## Next integration stage
-
-Before showing live device data, add a backend endpoint and persistent database. The ESP32 should send authenticated readings over HTTPS or MQTT through a suitable broker/API. Do not place database service-role keys or device secrets in frontend code. Configure secrets as Vercel environment variables and validate device identity and payloads on the server.
-
-Potential next steps:
-1. Define the worker/device data model.
-2. Add Supabase project and schema, or another backend.
-3. Add authenticated API ingestion for ESP32 readings.
-4. Replace demo data with database subscriptions/polling.
-5. Add real notification delivery and test it safely.
+The repository includes `vercel.json` for SPA routing. New commits to the connected production branch (normally `main`) should trigger a deployment if Vercel Git integration is enabled.
