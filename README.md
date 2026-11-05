@@ -42,3 +42,20 @@ WorkerCare is an educational prototype, not a certified medical or emergency-res
 6. Confirm the pin definitions at the top of the sketch match your board and wiring before uploading.
 
 See [wiring notes](docs/WIRING.md) and [build stages](docs/ROADMAP.md).
+
+## Web dashboard
+
+A responsive React + Vite dashboard is available in `src/`. It includes overview metrics, worker directory, environmental monitoring views, alerts, and device inventory.
+
+### Run the web application
+
+Requirements: Node.js 18 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+For deployment, connect this repository to Vercel with the Vite framework preset, build command `npm run build`, and output directory `dist`.
+
+**Demo mode:** dashboard readings, worker profiles, device status, and alerts are illustrative local data. The SOS test does not contact anyone. Live ESP32/backend integration has not yet been implemented. See [software documentation](docs/SOFTWARE.md).
