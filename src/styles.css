@@ -66,7 +66,7 @@
 }
 
 /* WorkerCare supplied login artwork with real, interactive form controls */
-.login-artboard{width:100%;min-height:100vh;aspect-ratio:1672/941;background:#062c68 url('/workercare-login.png') center top/100% 100% no-repeat;position:relative;overflow:hidden}
+.login-artboard{width:100%;min-height:100vh;aspect-ratio:1672/941;background:#062c68 url('/WorkerCare%20Construction%20Login.png') center top/100% 100% no-repeat;position:relative;overflow:hidden}
 .login-hotspots{position:absolute;inset:0}
 .login-hotspots input{position:absolute;border:0;outline:0;background:transparent;color:#fff;font:500 clamp(15px,1.65vw,27px) 'DM Sans',sans-serif}
 .login-hotspots input:focus{outline:2px solid #65c8ff;outline-offset:2px;border-radius:12px;background:#ffffff0d}
