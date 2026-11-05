@@ -139,3 +139,54 @@ html,body,#root{min-height:100%;margin:0}
 .wc-clean-page:after{width:460px;height:460px;bottom:-340px;right:-200px;background:#19b9ff18}
 .wc-clean-card{width:min(100%,420px)!important;margin:auto!important;flex:none!important}
 @media(max-width:480px){.wc-clean-page{padding:20px 16px!important}.wc-clean-card{width:100%!important}}
+
+/* Readability pass: increase interface typography while preserving the existing layout */
+body{font-size:15px}
+.nav-item{font-size:14px}
+.workspace-label,.eyebrow{font-size:11px}
+.help-card strong{font-size:14px}
+.help-card p{font-size:12px}
+.help-card button{font-size:12px}
+.profile-copy strong{font-size:12px}
+.profile-copy small{font-size:11px}
+.breadcrumb{font-size:13px}
+.page-heading h1{font-size:29px}
+.page-heading p{font-size:13px}
+.button{font-size:12px}
+.stat-top{font-size:12px}
+.stat-value{font-size:28px}
+.stat-value small{font-size:12px}
+.stat-note{font-size:11px}
+.panel-heading h2{font-size:16px}
+.panel-heading p{font-size:12px}
+.panel-heading select{font-size:11px}
+.chart-legend,.chart-foot{font-size:11px}
+.condition-site{font-size:12px}
+.condition-reading strong{font-size:19px}
+.condition-reading small{font-size:10px}
+.condition-foot,.panel-link{font-size:11px}
+.status-pill{font-size:10px}
+.text-button{font-size:11px}
+.search-box input{font-size:12px}
+.table-count{font-size:11px}
+table th{font-size:11px}
+table td{font-size:12px}
+.worker-cell strong{font-size:13px}
+.worker-cell small{font-size:11px}
+.alert-copy strong{font-size:13px}
+.alert-copy small,.alert-copy span{font-size:11px}
+.demo-note,.demo-disclaimer{font-size:12px}
+.footer{font-size:11px}
+.wc-clean-card h1{font-size:36px}
+.wc-clean-subtitle{font-size:16px}
+.wc-clean-field input{font-size:16px}
+.wc-clean-options{font-size:14px}
+.wc-clean-submit{font-size:17px}
+.wc-clean-footer{font-size:12px}
+@media(max-width:700px){
+ .page-wrap{padding:22px 18px 16px}
+ .topbar{padding:0 18px}
+ .page-heading h1{font-size:25px}
+ .panel-heading h2{font-size:15px}
+ table td{font-size:12px}
+}
