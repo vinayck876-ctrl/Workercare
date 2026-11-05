@@ -18,7 +18,7 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState('');
   function submit(event) {
     event.preventDefault();
-    const account = DEMO_ACCOUNTS.find(item => item.username === username.trim().toLowerCase() && item.password === password);
+    const account = DEMO_ACCOUNTS.find(item => item.username === username.trim().toLowerCase() && item.password === password.trim());
     if (!account) { setError('Incorrect username or password'); return; }
     onLogin({ ...account, remember });
   }
