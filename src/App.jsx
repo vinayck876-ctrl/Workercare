@@ -95,7 +95,7 @@ function App() {
 
       <div className="page-wrap">
         <section className="page-heading">
-          <div><div className="eyebrow">TUESDAY, 05 NOVEMBER 2026 <span>•</span> LIVE OPERATIONS</div><h1>{pageTitle}</h1><p>Monitor workforce safety and respond to risks across your sites.</p></div>
+          <div><div className="eyebrow">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()} <span>•</span> LIVE OPERATIONS</div><h1>{pageTitle}</h1><p>Monitor workforce safety and respond to risks across your sites.</p></div>
           <div className="heading-actions"><button className="button button-secondary" onClick={() => notify('Report export will be available when live data is connected.')}>Export report</button><button className="button button-primary" onClick={simulateSOS}><Zap size={16}/> Test SOS alert</button></div>
         </section>
 
