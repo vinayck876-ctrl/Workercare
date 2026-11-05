@@ -9,6 +9,7 @@ import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis
 } from 'recharts';
 import { initialAlerts, initialWorkers, temperatureData } from './data/demo';
+import Login from './Login.jsx';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard },
@@ -39,6 +40,10 @@ function App() {
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [toast, setToast] = useState('');
   const [range, setRange] = useState('Today');
+  const [currentUser, setCurrentUser] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('workercare-user') || 'null'); }
+    catch { return null; }
+  });
 
   const filteredWorkers = useMemo(() => workers.filter(w =>
     [w.name, w.id, w.role, w.site].join(' ').toLowerCase().includes(search.toLowerCase())
@@ -64,6 +69,19 @@ function App() {
     notify('Alert acknowledged.');
   }
 
+  function handleLogin(user) {
+    sessionStorage.setItem('workercare-user', JSON.stringify(user));
+    setCurrentUser(user);
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem('workercare-user');
+    setCurrentUser(null);
+    setActive('Overview');
+  }
+
+  if (!currentUser) return <Login onLogin={handleLogin} />;
+
   const pageTitle = active === 'Overview' ? 'Overview' : active;
   return <div className="app-shell">
     <aside className={`sidebar ${showMobileNav ? 'sidebar-open' : ''}`}>
@@ -82,7 +100,7 @@ function App() {
       <button className="nav-item" onClick={() => notify('Settings are coming in the next build.')}><Settings size={18}/><span>Settings</span></button>
       <div className="sidebar-bottom">
         <div className="help-card"><div className="help-icon"><LifeBuoy size={18}/></div><strong>Need a hand?</strong><p>Find setup guidance and product support.</p><button onClick={() => notify('Support documentation will be added soon.')}>View help <span>↗</span></button></div>
-        <div className="profile-row"><div className="profile-avatar">WC</div><div className="profile-copy"><strong>WorkerCare Admin</strong><small>Project workspace</small></div><MoreHorizontal size={18}/></div>
+        <div className="profile-row"><div className="profile-avatar">{currentUser.name.split(' ').map(part => part[0]).slice(0,2).join('').toUpperCase()}</div><div className="profile-copy"><strong>{currentUser.name}</strong><small>{currentUser.role}</small></div><button className="logout-button" onClick={handleLogout} title="Sign out">Sign out</button></div>
       </div>
     </aside>
 
@@ -90,7 +108,7 @@ function App() {
     <main className="main-content">
       <header className="topbar">
         <div className="topbar-left"><button className="mobile-menu icon-button" onClick={() => setShowMobileNav(true)} aria-label="Open menu"><Menu size={20}/></button><div className="breadcrumb">Workspace <span>/</span> <strong>{pageTitle}</strong></div></div>
-        <div className="topbar-right"><span className="demo-badge"><i/> DEMO ENVIRONMENT</span><button className="icon-button notification-button" onClick={() => setActive('Alerts & incidents')} aria-label="View alerts"><Bell size={19}/><i/></button><div className="top-avatar">VA</div></div>
+        <div className="topbar-right"><span className="demo-badge"><i/> DEMO ENVIRONMENT</span><button className="icon-button notification-button" onClick={() => setActive('Alerts & incidents')} aria-label="View alerts"><Bell size={19}/><i/></button><div className="top-avatar" title={currentUser.name}>{currentUser.name.split(' ').map(part => part[0]).slice(0,2).join('').toUpperCase()}</div></div>
       </header>
 
       <div className="page-wrap">
