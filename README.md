@@ -31,7 +31,7 @@ Current pin plan: DHT22 data GPIO 4; MPU6050 SDA/SCL GPIO 21/22; SOS GPIO 13; st
 - Device token verification and telemetry Edge Function: added
 - React Supabase client and data-access helpers: added
 - ESP32 HTTPS telemetry firmware groundwork: added
-- Existing dashboard conversion from demo data to Supabase: not yet completed
+- Supabase-authenticated live dashboard and Realtime subscriptions: implemented (project configuration and end-to-end test pending)
 - Supabase project provisioning and live end-to-end test: not yet completed
 
 See [Supabase setup](docs/SUPABASE_SETUP.md), [device setup](docs/DEVICE_SETUP.md), [software notes](docs/SOFTWARE.md), [wiring](docs/WIRING.md), and [roadmap](docs/ROADMAP.md).
