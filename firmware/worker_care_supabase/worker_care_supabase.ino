@@ -24,12 +24,13 @@ constexpr unsigned long FALL_WINDOW_MS = 1200;
 constexpr unsigned long FALL_COOLDOWN_MS = 30000;
 constexpr unsigned long SENSOR_INTERVAL_MS = 10000;
 constexpr unsigned long WIFI_RETRY_MS = 10000;
+constexpr unsigned long EVENT_RETRY_MS = 5000;
 
 DHT dht(DHT_PIN, DHT22);
 Adafruit_MPU6050 mpu;
 bool mpuReady = false, lastSos = false, sosPending = false, fallPending = false;
 bool freefallSeen = false;
-unsigned long freefallAt = 0, lastFallAt = 0, lastSensorAt = 0, lastWifiAt = 0;
+unsigned long freefallAt = 0, lastFallAt = 0, lastSensorAt = 0, lastWifiAt = 0, lastSendAttemptAt = 0;
 float temperatureC = NAN, humidityPct = NAN;
 
 void connectWiFi() {
@@ -134,7 +135,9 @@ void loop() {
     else Serial.printf("Ambient %.1f C | RH %.1f %%\n", temperatureC, humidityPct);
   }
 
-  if (sosPending || fallPending || newReading) {
+  const bool eventRetryDue = (sosPending || fallPending) && now - lastSendAttemptAt >= EVENT_RETRY_MS;
+  if (newReading || eventRetryDue) {
+    lastSendAttemptAt = now;
     if (sendTelemetry(sosPending, fallPending)) {
       sosPending = false;
       fallPending = false;
