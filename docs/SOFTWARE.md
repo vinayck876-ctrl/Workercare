@@ -1,54 +1,49 @@
 # WorkerCare Web Software
 
-## Current implementation
+## Selected architecture
 
-The web dashboard is a React + Vite single-page application. It includes:
-- Professional responsive sign-in screen with five built-in demo accounts.
-- Session-only login and sign-out (no database).
-- Overview cards, environmental chart, site readings and worker directory.
-- Live monitoring page with sample environmental values.
-- Alerts page with local acknowledge actions and simulated SOS test.
-- Device inventory with sample battery values.
-- Responsive desktop and mobile navigation.
+The frontend is React + Vite. Supabase provides PostgreSQL, Authentication, Row Level Security and Realtime. ESP32 devices send telemetry to a Supabase Edge Function using individual device credentials.
 
-## Demo login accounts
+## Current dashboard state
 
-| Role | Username | Password |
-|---|---|---|
-| Administrator | `admin` | `admin123` |
-| North Site Supervisor | `supervisor1` | `site123` |
-| Market Site Supervisor | `supervisor2` | `site123` |
-| Safety Officer | `safety` | `safety123` |
-| Demo Viewer | `demo` | `demo123` |
+The existing dashboard is still a local demonstration:
+- Overview cards and environmental chart use illustrative values.
+- Worker directory and device inventory use local sample data.
+- Alert acknowledgement and SOS test are browser-side only.
+- Existing login is demo-only and is not Supabase authentication.
 
-Click an account on the login screen to autofill its username and password.
+The Supabase client and data-access helpers have been added, but the UI must still be migrated to use Supabase Auth and live queries. Do not enter real worker or sensitive information until that work is complete and tested.
 
-## No database
+## Supabase implementation
 
-The five accounts are hardcoded in `src/Login.jsx`. A successful login is kept in browser `sessionStorage` and cleared on sign-out or when the browser session ends. No database or backend is used.
+- Database migration: `supabase/migrations/202611080001_worker_care_schema.sql`
+- Device ingestion: `supabase/functions/device-ingest/index.ts`
+- Browser client: `src/lib/supabase.js`
+- Data access helpers: `src/lib/workerCareApi.js`
 
-**Security limitation:** this is not real authentication. The credentials are visible in the frontend bundle and can be bypassed by a technically capable user. Use only for a classroom/demo prototype; do not store personal, worker, health, or other sensitive information.
+Follow [Supabase setup](SUPABASE_SETUP.md) and [device setup](DEVICE_SETUP.md).
 
-## Demo data limitations
-
-Worker profiles, device status, battery values, sensor readings, and alerts are illustrative local data. They are not received from the ESP32. The SOS test only adds a browser-side demo alert and does not contact anyone or emergency services.
-
-## Run locally
+## Local development
 
 Requirements: Node.js 18 or newer.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-## Vercel deployment
+Set the Supabase URL and publishable/anon key in `.env.local`. Never use the service-role key in the browser.
 
-Connect the GitHub repository `vinayck876-ctrl/Workercare` to a Vercel project.
+## Deployment
 
-- Framework preset: Vite
-- Build command: `npm run build`
-- Output directory: `dist`
-- Install command: `npm install`
+For Vercel use the Vite preset, `npm run build`, and `dist`. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel project settings.
 
-The repository includes `vercel.json` for SPA routing. New commits to the connected production branch (normally `main`) should trigger a deployment if Vercel Git integration is enabled.
+## Security notes
+
+- New accounts receive the least-privileged worker role.
+- Privileged roles and worker assignments must be provisioned by a trusted administrator.
+- Row Level Security restricts access to assigned workers.
+- Device secrets are stored as SHA-256 hashes in the private schema.
+- The service-role key is used only by the Edge Function.
+- A database alert is not proof that a person received or acted on an SOS.
