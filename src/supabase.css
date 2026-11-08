@@ -12,7 +12,7 @@
 .sc-login input{width:100%;box-sizing:border-box;border:1px solid #dce3e9;border-radius:10px;padding:13px 14px;font:inherit;outline:none}
 .sc-login input:focus{border-color:#45a879;box-shadow:0 0 0 3px #45a87920}
 .sc-login small{display:block;color:#8995a2;margin-top:18px;line-height:1.5}
-.sc-primary{border:0;border-radius:10px;background:#21865a;color:white;padding:13px;font:700 14px inherit;cursor:pointer}
+.sc-primary{border:0;border-radius:10px;background:#21865a;color:white;padding:13px;font:700 14px 'DM Sans',sans-serif;cursor:pointer}
 .sc-primary:disabled{opacity:.6;cursor:wait}
 .sc-error{background:#fff1f0;border:1px solid #ffd4cf;color:#a6372d;border-radius:9px;padding:10px 12px;font-size:13px}
 .sc-loading{padding:25px}
