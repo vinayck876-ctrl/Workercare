@@ -34,8 +34,9 @@ unsigned long freefallAt = 0, lastFallAt = 0, lastSensorAt = 0, lastWifiAt = 0, 
 float temperatureC = NAN, humidityPct = NAN;
 
 void connectWiFi() {
-  if (WiFi.status() == WL_CONNECTED || millis() - lastWifiAt < WIFI_RETRY_MS) return;
-  lastWifiAt = millis();
+  const unsigned long now = millis();
+  if (WiFi.status() == WL_CONNECTED || (lastWifiAt != 0 && now - lastWifiAt < WIFI_RETRY_MS)) return;
+  lastWifiAt = now;
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 }
