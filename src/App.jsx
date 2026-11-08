@@ -111,7 +111,7 @@ function App() {
       <button className="nav-item" onClick={() => notify('Settings are coming in the next build.')}><Settings size={18}/><span>Settings</span></button>
       <div className="sidebar-bottom">
         <div className="help-card"><div className="help-icon"><LifeBuoy size={18}/></div><strong>Need a hand?</strong><p>Find setup guidance and product support.</p><button onClick={() => notify('Support documentation will be added soon.')}>View help <span>↗</span></button></div>
-        <div className="profile-row"><div className="profile-avatar">{currentUser.name.split(' ').map(part => part[0]).slice(0,2).join('').toUpperCase()}</div><div className="profile-copy"><strong>{currentUser.name}</strong><small>{currentUser.role}</small></div><button className="logout-button" onClick={handleLogout} title="Sign out">Sign out</button></div>
+        <div className="profile-row"><div className="profile-avatar">{currentUser.name.split(' ').map(part => part[0]).slice(0,2).join('').toUpperCase()}</div><div className="profile-copy"><strong>{currentUser.name}</strong><small>{currentUser.workerType || currentUser.role}</small></div><button className="logout-button" onClick={handleLogout} title="Sign out">Sign out</button></div>
       </div>
     </aside>
 
