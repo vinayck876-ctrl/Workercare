@@ -190,3 +190,19 @@ table td{font-size:12px}
  .panel-heading h2{font-size:15px}
  table td{font-size:12px}
 }
+
+
+/* Three-role demo account selector */
+.wc-clean-role-label{font-size:13px;font-weight:700;color:#dcecff;margin:0 0 -7px 2px}
+.wc-clean-role-options{display:grid;gap:8px}
+.wc-clean-role-option{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 13px;border:1px solid #9fc8ef55;border-radius:11px;background:#ffffff08;color:#c9e4ff;transition:.18s}
+.wc-clean-role-option:hover{background:#ffffff13;border-color:#78b9ec99}
+.wc-clean-role-option.selected{background:#168de925;border-color:#58c5ff;box-shadow:0 0 0 2px #38bdf822}
+.wc-clean-role-option>svg{flex-shrink:0;color:#63c8ff}
+.wc-clean-role-option strong,.wc-clean-role-option small{display:block}
+.wc-clean-role-option strong{font-size:14px;color:#fff}
+.wc-clean-role-option small{font-size:11px;line-height:1.35;color:#b5cce5;margin-top:3px}
+.wc-clean-submit:disabled{opacity:.5;cursor:not-allowed;filter:saturate(.5);transform:none}
+.wc-clean-demo-note{display:grid;gap:4px;text-align:center;margin-top:17px;padding:11px 12px;border:1px solid #ffffff18;border-radius:9px;background:#ffffff08}
+.wc-clean-demo-note strong{font-size:12px;color:#dceeff}
+.wc-clean-demo-note span{font-size:10px;line-height:1.5;color:#a9c3df}
