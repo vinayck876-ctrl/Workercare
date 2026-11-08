@@ -125,9 +125,9 @@ returns boolean language sql stable security definer set search_path = public as
   or exists (select 1 from public.worker_assignments a where a.worker_id = target_worker_id and a.user_id = auth.uid());
 $$;
 create or replace function public.has_staff_role()
-returns boolean language sql stable security definer set search_path = public as $
+returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('supervisor','safety_officer','admin'));
-$;
+$$;
 revoke all on function public.can_access_worker(uuid) from public, anon;
 revoke all on function public.has_staff_role() from public, anon;
 grant execute on function public.can_access_worker(uuid) to authenticated;
