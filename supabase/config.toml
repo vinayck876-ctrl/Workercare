@@ -1,0 +1,4 @@
+project_id = "workercare"
+
+[functions.device-ingest]
+verify_jwt = false
