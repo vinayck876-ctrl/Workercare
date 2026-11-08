@@ -125,9 +125,13 @@ returns boolean language sql stable security definer set search_path = public as
   or exists (select 1 from public.worker_assignments a where a.worker_id = target_worker_id and a.user_id = auth.uid());
 $$;
 create or replace function public.has_staff_role()
-returns boolean language sql stable security definer set search_path = public as $$
+returns boolean language sql stable security definer set search_path = public as $
   select exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('supervisor','safety_officer','admin'));
-$$;
+$;
+revoke all on function public.can_access_worker(uuid) from public, anon;
+revoke all on function public.has_staff_role() from public, anon;
+grant execute on function public.can_access_worker(uuid) to authenticated;
+grant execute on function public.has_staff_role() to authenticated;
 
 -- This RPC is callable only by service_role, never by a browser or device directly.
 create or replace function public.verify_device_token(p_device_code text, p_token_sha256 text)
@@ -172,12 +176,13 @@ create policy alerts_select_assigned on public.alerts for select to authenticate
 drop policy if exists alerts_acknowledge_staff on public.alerts;
 create policy alerts_acknowledge_staff on public.alerts for update to authenticated
 using (public.has_staff_role() and public.can_access_worker(worker_id))
-with check (public.has_staff_role() and public.can_access_worker(worker_id));
+with check (public.has_staff_role() and public.can_access_worker(worker_id) and acknowledged_by = auth.uid());
 drop policy if exists history_select_assigned on public.worker_history;
 create policy history_select_assigned on public.worker_history for select to authenticated using (public.can_access_worker(worker_id));
 
 grant select on public.profiles, public.sites, public.workers, public.worker_assignments,
   public.devices, public.sensor_readings, public.alerts, public.worker_history to authenticated;
+revoke update on public.profiles from anon, authenticated;
 grant update (display_name, phone, updated_at) on public.profiles to authenticated;
 grant update (status, acknowledged_by, acknowledged_at, resolved_at) on public.alerts to authenticated;
 
