@@ -15,7 +15,7 @@ Use the module's onboard pull-up if present. For a bare DHT22 sensor, a pull-up 
 ## SOS push button
 
 - Place the tactile button across the breadboard centre gap.
-- Connect one side to GPIO 18.
+- Connect one side to GPIO 13.
 - Connect the opposite side to GND.
 - Firmware uses `INPUT_PULLUP`, so the input reads LOW when pressed.
 
