@@ -13,4 +13,8 @@ Thumbs.db
 
 # Local secrets and configuration
 secrets.h
+config.h
 .env
+.env.*
+!.env.example
+!.env.*.example

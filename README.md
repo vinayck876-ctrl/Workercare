@@ -2,52 +2,41 @@
 
 An affordable wearable safety prototype designed to help outdoor and informal workers respond to environmental heat risk and request assistance.
 
-## Prototype goals
+## Selected architecture
 
-- Monitor ambient temperature and humidity with a DHT22 sensor.
-- Provide a local heat-risk reminder (environmental guidance, not a medical measurement).
-- Let the wearer trigger an SOS alert with a push button.
-- Experiment with fall/motion detection using an MPU6050.
-- Provide local vibration and buzzer notifications.
-- Operate locally without internet for the first prototype stage.
+- **Frontend:** React + Vite (existing responsive dashboard)
+- **Backend:** Supabase PostgreSQL, Authentication, Row Level Security and Realtime
+- **Device ingestion:** Supabase Edge Function authenticated with a unique per-device token
+- **Wearable:** ESP32 DevKit V1 (ESP-WROOM-32), DHT22, MPU6050 and SOS pushbutton
 
-## Current hardware plan
+Flask and MySQL are not part of the selected architecture.
+
+## Hardware plan
 
 | Part | Purpose | Status |
 |---|---|---|
-| ESP32 DevKit V1 (ESP-WROOM-32) | Main controller | Planned replacement for unstable ESP32-C3 board |
-| DHT22 | Ambient temperature and humidity | Available |
-| MPU6050 / GY-521 | Motion and experimental fall detection | Available; header soldered |
-| Push button | SOS input | Available |
-| Coin vibration motor | Haptic reminders | Available |
-| DRV8833 | Motor driver | To be purchased |
-| Active buzzer (3.3 V compatible) | Audible alert | To be purchased |
-| LEDs and resistors | Status indication | Available |
+| ESP32 DevKit V1 | Main controller | Selected |
+| DHT22 | Ambient temperature and relative humidity | Available |
+| MPU6050 / GY-521 | Experimental motion/fall heuristic | Available |
+| SOS pushbutton | Worker-initiated emergency alert | Available |
+| Coin vibration motor + driver | Haptic reminders | Driver/wiring pending |
+| Active buzzer | Local audible alert | Wiring pending |
+| Battery and enclosure | Portable wearable | To be finalized |
 
-## Firmware status
+Current pin plan: DHT22 data GPIO 4; MPU6050 SDA/SCL GPIO 21/22; SOS GPIO 13; status LED GPIO 2. Confirm wiring against the exact board before powering it.
 
-Stage 1 is a basic ESP32 DevKit firmware test for the DHT22, SOS button, and status LED. Motor control, buzzer control, MPU6050 processing, and remote notifications will be added in later stages after the exact wiring is tested.
+## Repository implementation status
 
-## Safety and limitations
+- Supabase schema and row-level security migration: added
+- Device token verification and telemetry Edge Function: added
+- React Supabase client and data-access helpers: added
+- ESP32 HTTPS telemetry firmware groundwork: added
+- Supabase-authenticated live dashboard and Realtime subscriptions: implemented (project configuration and end-to-end test pending)
+- Supabase project provisioning and live end-to-end test: not yet completed
 
-WorkerCare is an educational prototype, not a certified medical or emergency-response device. The DHT22 measures **ambient air temperature and relative humidity**; it does not measure body temperature, hydration, or a worker's medical condition. A local SOS indication does not contact emergency services unless a separate communication system is added and tested.
+See [Supabase setup](docs/SUPABASE_SETUP.md), [device setup](docs/DEVICE_SETUP.md), [software notes](docs/SOFTWARE.md), [wiring](docs/WIRING.md), and [roadmap](docs/ROADMAP.md).
 
-## Getting started
-
-1. Install Arduino IDE.
-2. In Boards Manager, install **esp32 by Espressif Systems**.
-3. Install **DHT sensor library by Adafruit** and **Adafruit Unified Sensor** from Library Manager.
-4. Open `firmware/worker_care_stage1/worker_care_stage1.ino`.
-5. Select **ESP32 Dev Module** for a standard ESP32 DevKit V1.
-6. Confirm the pin definitions at the top of the sketch match your board and wiring before uploading.
-
-See [wiring notes](docs/WIRING.md) and [build stages](docs/ROADMAP.md).
-
-## Web dashboard
-
-A responsive React + Vite dashboard is available in `src/`. It includes overview metrics, worker directory, environmental monitoring views, alerts, and device inventory.
-
-### Run the web application
+## Run the web application
 
 Requirements: Node.js 18 or newer.
 
@@ -56,20 +45,12 @@ npm install
 npm run dev
 ```
 
-For deployment, connect this repository to Vercel with the Vite framework preset, build command `npm run build`, and output directory `dist`.
+Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` after creating the Supabase project. Do not put the service-role key in any frontend variable.
 
-**Demo mode:** dashboard readings, worker profiles, device status, and alerts are illustrative local data. The SOS test does not contact anyone. Live ESP32/backend integration has not yet been implemented. See [software documentation](docs/SOFTWARE.md).
+For Vercel, use the Vite preset, build command `npm run build`, and output directory `dist`. Add the same two public Supabase environment variables in Vercel project settings.
 
-## Prototype login accounts
+## Safety and limitations
 
-The dashboard has five built-in demo accounts. Select an account on the login screen to autofill its credentials.
+WorkerCare is an educational prototype, not a certified medical or emergency-response device. DHT22 measures **ambient air temperature and relative humidity**; it does not measure body temperature, hydration, or medical condition. MPU6050 fall detection is experimental and may produce false positives or miss a fall.
 
-| Role | Username | Password |
-|---|---|---|
-| Administrator | `admin` | `admin123` |
-| North Site Supervisor | `supervisor1` | `site123` |
-| Market Site Supervisor | `supervisor2` | `site123` |
-| Safety Officer | `safety` | `safety123` |
-| Demo Viewer | `demo` | `demo123` |
-
-This is **demo-only client-side access control**. The credentials are included in the public frontend source and are not secure authentication. Do not use real passwords or sensitive data. Login state lasts for the current browser tab/session. No database is required.
+An SOS event is stored as an alert in Supabase. This implementation does not automatically call, SMS, contact emergency services or guarantee that a human receives/responds to an alert. Configure and test real notification/escalation channels before relying on the system.

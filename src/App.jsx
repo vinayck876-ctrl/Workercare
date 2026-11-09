@@ -10,6 +10,8 @@ import {
 } from 'recharts';
 import { initialAlerts, initialWorkers, temperatureData } from './data/demo';
 import Login from './Login.jsx';
+import SupabaseApp from './SupabaseApp.jsx';
+import { isSupabaseConfigured } from './lib/supabase';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard },
@@ -32,7 +34,7 @@ function StatusPill({ status }) {
   return <span className={`status-pill ${cls}`}><i/>{status}</span>;
 }
 
-function App() {
+function DemoApp() {
   const [active, setActive] = useState('Overview');
   const [workers, setWorkers] = useState(initialWorkers);
   const [alerts, setAlerts] = useState(initialAlerts);
@@ -178,6 +180,10 @@ function App() {
     </main>
     {toast && <div className="toast"><CheckCircle2 size={17}/>{toast}<button onClick={()=>setToast('')} aria-label="Dismiss"><X size={15}/></button></div>}
   </div>;
+}
+
+function App() {
+  return isSupabaseConfigured ? <SupabaseApp /> : <DemoApp />;
 }
 
 export default App;
