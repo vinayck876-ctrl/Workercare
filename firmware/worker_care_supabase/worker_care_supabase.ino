@@ -1,148 +1,464 @@
-/*
-  WorkerCare connected prototype
-  ESP32 DevKit V1 (ESP-WROOM-32)
-  DHT22 GPIO 4 | MPU6050 SDA/SCL 21/22 | SOS GPIO 13
-  HTTPS telemetry to Supabase device-ingest Edge Function.
-  Fall detection is experimental, not a certified safety feature.
-*/
+
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Wire.h>
 #include <DHT.h>
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
+#include <math.h>
+#include <time.h>
 #include "config.h"
 
-constexpr uint8_t DHT_PIN = 4;
-constexpr uint8_t SOS_BUTTON_PIN = 13;
-constexpr uint8_t STATUS_LED_PIN = 2;
-constexpr float FREEFALL_MPS2 = 4.9f;
-constexpr float IMPACT_MPS2 = 24.5f;
-constexpr unsigned long FALL_WINDOW_MS = 1200;
-constexpr unsigned long FALL_COOLDOWN_MS = 30000;
-constexpr unsigned long SENSOR_INTERVAL_MS = 10000;
-constexpr unsigned long WIFI_RETRY_MS = 10000;
-constexpr unsigned long EVENT_RETRY_MS = 5000;
+// ---------- PIN CONFIGURATION ----------
+#define DHT_PIN 4
+#define DHT_TYPE DHT22
 
-DHT dht(DHT_PIN, DHT22);
-Adafruit_MPU6050 mpu;
-bool mpuReady = false, lastSos = false, sosPending = false, fallPending = false;
-bool freefallSeen = false;
-unsigned long freefallAt = 0, lastFallAt = 0, lastSensorAt = 0, lastWifiAt = 0, lastSendAttemptAt = 0;
-float temperatureC = NAN, humidityPct = NAN;
+#define MPU_SDA 21
+#define MPU_SCL 22
+#define MPU_ADDR 0x68
 
-void connectWiFi() {
-  const unsigned long now = millis();
-  if (WiFi.status() == WL_CONNECTED || (lastWifiAt != 0 && now - lastWifiAt < WIFI_RETRY_MS)) return;
-  lastWifiAt = now;
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#define SOS_PIN 13
+#define LED_PIN 2
+
+// ---------- TIMING ----------
+#define SENSOR_INTERVAL 10000
+#define WIFI_TIMEOUT 20000
+#define WIFI_RETRY_INTERVAL 5000
+#define MOTION_INTERVAL 50
+#define FALL_COOLDOWN 30000
+
+// ---------- FALL DETECTION ----------
+#define FREEFALL_THRESHOLD 0.5
+#define IMPACT_THRESHOLD 2.5
+#define FALL_WINDOW 1200
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+WiFiClientSecure secureClient;
+
+// ---------- SENSOR VARIABLES ----------
+float temperature = 0;
+float humidity = 0;
+
+float ax = 0;
+float ay = 0;
+float az = 0;
+
+bool sensorDataValid = false;
+bool mpuReady = false;
+
+// ---------- ALERT VARIABLES ----------
+bool sosPending = false;
+bool fallPending = false;
+
+bool previousSOSState = HIGH;
+
+unsigned long freefallTime = 0;
+unsigned long lastFallTime = 0;
+
+// ---------- TIMERS ----------
+unsigned long lastSensorTime = 0;
+unsigned long lastMotionTime = 0;
+unsigned long lastUploadTime = 0;
+
+// ---------- WIFI STATE ----------
+bool wifiAttemptActive = false;
+bool wifiConnectedPreviously = false;
+bool timeSyncStarted = false;
+
+unsigned long wifiAttemptStart = 0;
+unsigned long nextWifiAttempt = 0;
+
+// ---------- MPU FUNCTIONS ----------
+
+bool writeMPURegister(uint8_t reg, uint8_t value) {
+    Wire.beginTransmission(MPU_ADDR);
+    Wire.write(reg);
+    Wire.write(value);
+    return Wire.endTransmission() == 0;
 }
+
+bool readMPURegisters(uint8_t reg, uint8_t *data, uint8_t length) {
+    Wire.beginTransmission(MPU_ADDR);
+    Wire.write(reg);
+
+    if (Wire.endTransmission(false) != 0) {
+        return false;
+    }
+
+    uint8_t received =
+        Wire.requestFrom(MPU_ADDR, length, true);
+
+    if (received != length) {
+        return false;
+    }
+
+    for (uint8_t i = 0; i < length; i++) {
+        data[i] = Wire.read();
+    }
+
+    return true;
+}
+
+bool initializeMPU() {
+    uint8_t identity = 0;
+
+    if (!readMPURegisters(0x75, &identity, 1)) {
+        Serial.println("MPU communication failed.");
+        return false;
+    }
+
+    Serial.print("MPU WHO_AM_I: 0x");
+    Serial.println(identity, HEX);
+
+    if (identity != 0x68 && identity != 0x70) {
+        Serial.println("Unknown MPU identity.");
+        return false;
+    }
+
+    // Wake up MPU
+    if (!writeMPURegister(0x6B, 0x00)) {
+        return false;
+    }
+
+    delay(100);
+
+    // Accelerometer range: +/- 2g
+    writeMPURegister(0x1C, 0x00);
+
+    Serial.println("MPU initialized using direct I2C.");
+
+    return true;
+}
+
+bool readAcceleration() {
+    uint8_t data[6];
+
+    if (!readMPURegisters(0x3B, data, 6)) {
+        return false;
+    }
+
+    int16_t rawX = (int16_t)((data[0] << 8) | data[1]);
+    int16_t rawY = (int16_t)((data[2] << 8) | data[3]);
+    int16_t rawZ = (int16_t)((data[4] << 8) | data[5]);
+
+    // Convert raw readings to m/s^2
+    ax = (rawX / 16384.0) * 9.80665;
+    ay = (rawY / 16384.0) * 9.80665;
+    az = (rawZ / 16384.0) * 9.80665;
+
+    return true;
+}
+
+// ---------- FALL DETECTION ----------
 
 void sampleMotion() {
-  if (!mpuReady) return;
-  sensors_event_t a, g, t;
-  mpu.getEvent(&a, &g, &t);
-  const float magnitude = sqrtf(a.acceleration.x*a.acceleration.x +
-                                a.acceleration.y*a.acceleration.y +
-                                a.acceleration.z*a.acceleration.z);
-  const unsigned long now = millis();
-  if (magnitude < FREEFALL_MPS2) { freefallSeen = true; freefallAt = now; }
-  if (freefallSeen && now - freefallAt <= FALL_WINDOW_MS &&
-      magnitude > IMPACT_MPS2 && now - lastFallAt > FALL_COOLDOWN_MS) {
-    fallPending = true;
-    lastFallAt = now;
-    freefallSeen = false;
-    Serial.println("Possible fall pattern detected (experimental).");
-  }
-  if (freefallSeen && now - freefallAt > FALL_WINDOW_MS) freefallSeen = false;
+    if (!mpuReady || !readAcceleration()) {
+        return;
+    }
+
+    float totalAcceleration =
+        sqrt(ax * ax + ay * ay + az * az);
+
+    float accelerationG = totalAcceleration / 9.80665;
+
+    unsigned long now = millis();
+
+    if (now - lastFallTime < FALL_COOLDOWN) {
+        return;
+    }
+
+    // Detect possible freefall
+    if (accelerationG < FREEFALL_THRESHOLD) {
+        freefallTime = now;
+    }
+
+    // Detect impact after possible freefall
+    if (freefallTime != 0 &&
+        now - freefallTime <= FALL_WINDOW &&
+        accelerationG > IMPACT_THRESHOLD) {
+
+        fallPending = true;
+        lastFallTime = now;
+        freefallTime = 0;
+
+        Serial.println("WARNING: POSSIBLE FALL DETECTED!");
+    }
+
+    if (freefallTime != 0 &&
+        now - freefallTime > FALL_WINDOW) {
+        freefallTime = 0;
+    }
 }
 
-bool sendTelemetry(bool sos, bool fall) {
-  if (WiFi.status() != WL_CONNECTED) return false;
-  if (String(DEVICE_TOKEN).length() < 24 ||
-      String(DEVICE_INGEST_URL).indexOf("YOUR_PROJECT_REF") >= 0 ||
-      String(SUPABASE_ROOT_CA).indexOf("PASTE_TRUSTED") >= 0) {
-    Serial.println("Configure token, endpoint and trusted root CA in config.h.");
-    return false;
-  }
-  WiFiClientSecure tls;
-  tls.setCACert(SUPABASE_ROOT_CA);
-  HTTPClient http;
-  if (!http.begin(tls, DEVICE_INGEST_URL)) return false;
-  http.addHeader("Content-Type", "application/json");
-  http.addHeader("x-device-code", DEVICE_CODE);
-  http.addHeader("x-device-token", DEVICE_TOKEN);
-  String body = "{\"ambient_temp_c\":";
-  body += isnan(temperatureC) ? "null" : String(temperatureC, 1);
-  body += ",\"relative_humidity\":";
-  body += isnan(humidityPct) ? "null" : String(humidityPct, 1);
-  body += ",\"sos\":";
-  body += sos ? "true" : "false";
-  body += ",\"fall_detected\":";
-  body += fall ? "true" : "false";
-  body += "}";
-  const int code = http.POST(body);
-  if (code > 0) {
-    Serial.printf("Supabase response: %d\n", code);
-    Serial.println(http.getString());
-  } else {
-    Serial.printf("HTTPS request failed: %s\n", http.errorToString(code).c_str());
-  }
-  http.end();
-  return code >= 200 && code < 300;
+// ---------- SOS BUTTON ----------
+
+void checkSOS() {
+    bool currentState = digitalRead(SOS_PIN);
+
+    if (previousSOSState == HIGH &&
+        currentState == LOW) {
+
+        sosPending = true;
+
+        Serial.println("SOS BUTTON PRESSED!");
+    }
+
+    previousSOSState = currentState;
 }
+
+// ---------- WIFI CONNECTION ----------
+
+void maintainWiFi() {
+    unsigned long now = millis();
+
+    if (WiFi.status() == WL_CONNECTED) {
+
+        if (!wifiConnectedPreviously) {
+            Serial.println();
+            Serial.println("WiFi connected!");
+
+            Serial.print("IP Address: ");
+            Serial.println(WiFi.localIP());
+
+            wifiConnectedPreviously = true;
+            wifiAttemptActive = false;
+
+            digitalWrite(LED_PIN, HIGH);
+
+            // Start secure time synchronization
+            if (!timeSyncStarted) {
+                configTime(
+                    0,
+                    0,
+                    "pool.ntp.org",
+                    "time.nist.gov"
+                );
+
+                timeSyncStarted = true;
+                Serial.println("Synchronizing system time...");
+            }
+        }
+
+        return;
+    }
+
+    if (wifiConnectedPreviously) {
+        Serial.println("WiFi connection lost.");
+
+        wifiConnectedPreviously = false;
+        timeSyncStarted = false;
+
+        digitalWrite(LED_PIN, LOW);
+    }
+
+    // Do not call WiFi.begin while connecting
+    if (wifiAttemptActive) {
+
+        if (now - wifiAttemptStart < WIFI_TIMEOUT) {
+            return;
+        }
+
+        Serial.println("WiFi connection timed out.");
+
+        WiFi.disconnect(false, false);
+
+        wifiAttemptActive = false;
+        nextWifiAttempt = now + WIFI_RETRY_INTERVAL;
+
+        return;
+    }
+
+    // Wait before retrying
+    if (now < nextWifiAttempt) {
+        return;
+    }
+
+    Serial.println("Connecting to phone hotspot...");
+
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    wifiAttemptActive = true;
+    wifiAttemptStart = now;
+}
+
+// ---------- TIME CHECK ----------
+
+bool systemTimeReady() {
+    time_t currentTime = time(nullptr);
+
+    // Require a valid synchronized clock
+    return currentTime > 1700000000;
+}
+
+// ---------- SENSOR READING ----------
+
+void readSensors() {
+    float newTemperature = dht.readTemperature();
+    float newHumidity = dht.readHumidity();
+
+    if (!isnan(newTemperature) && !isnan(newHumidity)) {
+        temperature = newTemperature;
+        humidity = newHumidity;
+        sensorDataValid = true;
+
+        Serial.print("Temperature: ");
+        Serial.print(temperature);
+        Serial.print(" C | Humidity: ");
+        Serial.print(humidity);
+        Serial.println(" %");
+    } else {
+        Serial.println("DHT22 reading failed.");
+    }
+
+    if (mpuReady && readAcceleration()) {
+        Serial.print("Acceleration X: ");
+        Serial.print(ax);
+        Serial.print(" | Y: ");
+        Serial.print(ay);
+        Serial.print(" | Z: ");
+        Serial.println(az);
+    }
+}
+
+// ---------- SUPABASE TELEMETRY ----------
+
+void sendTelemetry() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WiFi not connected. Telemetry pending.");
+        return;
+    }
+
+    if (!systemTimeReady()) {
+        Serial.println("Waiting for secure time synchronization.");
+        return;
+    }
+
+    if (!sensorDataValid && !sosPending && !fallPending) {
+        Serial.println("No valid sensor data available.");
+        return;
+    }
+
+    char payload[256];
+
+    snprintf(
+        payload,
+        sizeof(payload),
+        "{\"ambient_temp_c\":%.2f,"
+        "\"relative_humidity\":%.2f,"
+        "\"sos\":%s,"
+        "\"fall_detected\":%s}",
+        temperature,
+        humidity,
+        sosPending ? "true" : "false",
+        fallPending ? "true" : "false"
+    );
+
+    secureClient.setCACert(SUPABASE_ROOT_CA);
+
+    HTTPClient http;
+
+    if (!http.begin(secureClient, DEVICE_INGEST_URL)) {
+        Serial.println("HTTPS connection initialization failed.");
+        return;
+    }
+
+    http.setTimeout(10000);
+
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("x-device-code", DEVICE_CODE);
+    http.addHeader("x-device-token", DEVICE_TOKEN);
+
+    Serial.println("Sending data to Supabase...");
+
+    int responseCode = http.POST(payload);
+
+    if (responseCode > 0) {
+        Serial.print("Supabase HTTP response: ");
+        Serial.println(responseCode);
+
+        String response = http.getString();
+        Serial.println(response);
+
+        if (responseCode >= 200 && responseCode < 300) {
+            Serial.println("Telemetry uploaded successfully.");
+
+            // Clear alerts only after successful upload
+            sosPending = false;
+            fallPending = false;
+        }
+    } else {
+        Serial.print("HTTPS upload failed: ");
+        Serial.println(http.errorToString(responseCode));
+    }
+
+    http.end();
+}
+
+// ---------- SETUP ----------
 
 void setup() {
-  Serial.begin(115200);
-  pinMode(SOS_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(STATUS_LED_PIN, OUTPUT);
-  dht.begin();
-  Wire.begin(21, 22);
-  mpuReady = mpu.begin();
-  if (mpuReady) {
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  } else Serial.println("MPU6050 not detected; fall detection disabled.");
-  WiFi.setAutoReconnect(true);
-  connectWiFi();
-  Serial.println("WorkerCare connected firmware started.");
+    Serial.begin(115200);
+    delay(1000);
+
+    Serial.println();
+    Serial.println("===== WORKERCARE STARTING =====");
+
+    pinMode(SOS_PIN, INPUT_PULLUP);
+    pinMode(LED_PIN, OUTPUT);
+
+    digitalWrite(LED_PIN, LOW);
+
+    dht.begin();
+
+    Wire.begin(MPU_SDA, MPU_SCL);
+    Wire.setClock(100000);
+
+    mpuReady = initializeMPU();
+
+    if (!mpuReady) {
+        Serial.println("MPU unavailable. Fall detection disabled.");
+    }
+
+    Serial.println("WorkerCare firmware initialized.");
+
+    // Start the first WiFi connection attempt
+    maintainWiFi();
 }
 
+// ---------- MAIN LOOP ----------
+
 void loop() {
-  connectWiFi();
-  sampleMotion();
+    unsigned long now = millis();
 
-  const bool pressed = digitalRead(SOS_BUTTON_PIN) == LOW;
-  if (pressed && !lastSos) {
-    sosPending = true;
-    digitalWrite(STATUS_LED_PIN, HIGH);
-    Serial.println("SOS queued for remote delivery.");
-  }
-  if (!pressed && lastSos) digitalWrite(STATUS_LED_PIN, LOW);
-  lastSos = pressed;
+    // Manage WiFi without repeated begin calls
+    maintainWiFi();
 
-  const unsigned long now = millis();
-  bool newReading = false;
-  if (now - lastSensorAt >= SENSOR_INTERVAL_MS) {
-    lastSensorAt = now;
-    humidityPct = dht.readHumidity();
-    temperatureC = dht.readTemperature();
-    newReading = true;
-    if (isnan(temperatureC) || isnan(humidityPct)) Serial.println("DHT22 read failed.");
-    else Serial.printf("Ambient %.1f C | RH %.1f %%\n", temperatureC, humidityPct);
-  }
+    // Read motion at regular intervals
+    if (now - lastMotionTime >= MOTION_INTERVAL) {
+        lastMotionTime = now;
 
-  const bool eventRetryDue = (sosPending || fallPending) && now - lastSendAttemptAt >= EVENT_RETRY_MS;
-  if (newReading || eventRetryDue) {
-    lastSendAttemptAt = now;
-    if (sendTelemetry(sosPending, fallPending)) {
-      sosPending = false;
-      fallPending = false;
+        sampleMotion();
     }
-  }
-  delay(20);
+
+    // Check SOS button
+    checkSOS();
+
+    // Read environmental sensors
+    if (now - lastSensorTime >= SENSOR_INTERVAL) {
+        lastSensorTime = now;
+
+        readSensors();
+    }
+
+    // Upload telemetry every 10 seconds
+    if (now - lastUploadTime >= SENSOR_INTERVAL) {
+        lastUploadTime = now;
+
+        sendTelemetry();
+    }
+
+    delay(5);
 }

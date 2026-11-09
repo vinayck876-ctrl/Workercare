@@ -78,7 +78,7 @@ Deno.serve(async (request) => {
     message: "Ambient temperature reached the prototype threshold; this is not a body-temperature or medical measurement.",
     details: { ambient_temp_c: temp, relative_humidity: humidity ?? null },
   });
-  if (typeof humidity === "number" && humidity >= 70) events.push({
+  if (typeof humidity === "number" && humidity >= 80) events.push({
     worker_id: device.worker_id, device_id: device.device_id, alert_type: "humidity",
     severity: "warning", title: "High relative humidity",
     message: "Relative humidity reached the prototype threshold.",
